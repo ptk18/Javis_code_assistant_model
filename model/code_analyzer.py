@@ -5,7 +5,6 @@ from typing import Dict, List, Any
 
 class CodeStructureExtractor:
     def __init__(self, code: str):
-        """Initialize the extractor with Python code as a string."""
         self.code = code
         try:
             self.tree = ast.parse(code)
@@ -15,7 +14,6 @@ class CodeStructureExtractor:
             self.tree = None
         
     def extract_structure(self) -> Dict[str, Any]:
-        """Extract the structure of the code (classes, functions, methods, attributes)."""
         if self.parsing_error:
             return {
                 "status": "error",
@@ -24,7 +22,6 @@ class CodeStructureExtractor:
                 "offset": self.parsing_error.offset
             }
         
-        # Initialize structure containers
         structure = {
             "status": "success",
             "classes": {},
@@ -32,9 +29,7 @@ class CodeStructureExtractor:
             "imports": []
         }
         
-        # Extract top-level elements
         for node in ast.iter_child_nodes(self.tree):
-            # Extract functions
             if isinstance(node, ast.FunctionDef):
                 structure["functions"].append({
                     "name": node.name,
@@ -42,7 +37,6 @@ class CodeStructureExtractor:
                     "arguments": [arg.arg for arg in node.args.args]
                 })
             
-            # Extract classes
             elif isinstance(node, ast.ClassDef):
                 class_info = {
                     "name": node.name,
@@ -52,7 +46,6 @@ class CodeStructureExtractor:
                     "attributes": []
                 }
                 
-                # Extract methods and attributes from class body
                 for item in node.body:
                     if isinstance(item, ast.FunctionDef):
                         method_info = {
@@ -62,7 +55,6 @@ class CodeStructureExtractor:
                         }
                         class_info["methods"].append(method_info)
                         
-                        # Extract attribute assignments in methods, especially __init__
                         if item.name == "__init__":
                             for stmt in item.body:
                                 if isinstance(stmt, ast.Assign):
@@ -77,7 +69,6 @@ class CodeStructureExtractor:
                 
                 structure["classes"][node.name] = class_info
             
-            # Extract imports
             elif isinstance(node, ast.Import):
                 for name in node.names:
                     structure["imports"].append({
@@ -97,11 +88,9 @@ class CodeStructureExtractor:
         return structure
     
     def _get_base_name(self, node):
-        """Extract the name of a base class from an AST node."""
         if isinstance(node, ast.Name):
             return node.id
         elif isinstance(node, ast.Attribute):
-            # Handle cases like module.ClassName
             parts = []
             current = node
             while isinstance(current, ast.Attribute):
@@ -110,10 +99,9 @@ class CodeStructureExtractor:
             if isinstance(current, ast.Name):
                 parts.insert(0, current.id)
             return '.'.join(parts)
-        return str(node)  # Fallback for other cases
+        return str(node)  
     
     def _get_node_location(self, node) -> Dict:
-        """Get the location information for a node."""
         return {
             "line_start": node.lineno,
             "line_end": node.end_lineno if hasattr(node, 'end_lineno') else node.lineno,
@@ -122,28 +110,10 @@ class CodeStructureExtractor:
         }
 
 def extract_code_structure(code: str) -> Dict:
-    """
-    Extract the structure of Python code and return information about classes, functions, methods, and attributes.
-    
-    Args:
-        code: A string containing Python code to analyze
-        
-    Returns:
-        A dictionary with structure information
-    """
     extractor = CodeStructureExtractor(code)
     return extractor.extract_structure()
 
 def extract_from_file(filename: str) -> Dict:
-    """
-    Extract code structure from a file.
-    
-    Args:
-        filename: Path to the Python file to analyze
-    
-    Returns:
-        A dictionary with structure information
-    """
     try:
         with open(filename, 'r') as f:
             code = f.read()
@@ -159,15 +129,11 @@ def extract_from_file(filename: str) -> Dict:
             "message": f"Error reading file: {str(e)}"
         }
 
-# This part runs when the script is executed directly
 if __name__ == "__main__":
-    # Example usage
     if len(sys.argv) > 1:
-        # Extract structure from file
         result = extract_from_file(sys.argv[1])
         print(json.dumps(result, indent=2))
     else:
-        # Example code for demonstration
         example_code = """
 class Animal:
     species_count = 0
